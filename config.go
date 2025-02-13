@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"gopkg.in/yaml.v3"
@@ -18,6 +19,7 @@ import (
 type Config struct {
 	SOCKS5Proxy       string `yaml:"socks5_proxy"`       // e.g., "127.0.0.1:9050" (required)
 	APIKey            string `yaml:"api_key"`            // your urlscan.io API key (required)
+	LocalPort         int    `yaml:"local_port"`         // default 3000
 	PollingInterval   int    `yaml:"polling_interval"`   // in seconds, default 10
 	InitialTimeout    int    `yaml:"initial_timeout"`    // in seconds, default 300 (5 minutes)
 	AdditionalTimeout int    `yaml:"additional_timeout"` // in seconds, default 300 (5 minutes)
@@ -28,6 +30,7 @@ func defaultConfig() *Config {
 	return &Config{
 		SOCKS5Proxy:       "127.0.0.1:9050",
 		APIKey:            "",
+		LocalPort:         3000,
 		PollingInterval:   10,
 		InitialTimeout:    300,
 		AdditionalTimeout: 300,
@@ -57,6 +60,19 @@ func promptForConfig(defaults *Config) *Config {
 			cfg.SOCKS5Proxy = text
 		}
 		if cfg.SOCKS5Proxy != "" {
+			break
+		}
+	}
+
+	// Prompt for local port
+	for {
+		fmt.Printf("Enter local port [%d]: ", cfg.LocalPort)
+		text, _ := reader.ReadString('\n')
+		text = strings.TrimSpace(text)
+		if text != "" {
+			cfg.LocalPort, _ = strconv.Atoi(text)
+		}
+		if cfg.LocalPort == 0 {
 			break
 		}
 	}

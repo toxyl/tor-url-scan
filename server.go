@@ -1,18 +1,33 @@
 package main
 
 import (
+	_ "embed"
+	"fmt"
+	"os"
+	"path/filepath"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/template/html/v2"
 	"github.com/google/uuid"
+	"github.com/toxyl/flo"
 	"github.com/toxyl/tor-url-scan/log"
 )
+
+//go:embed views/index.html
+var index string
 
 // ====================
 // Fiber Server & Endpoints
 // ====================
 
 func startServer(cfg *Config, apiClient *URLScanClient) {
-	engine := html.New("./views", ".html")
+	dir := filepath.Join(filepath.Dir(os.Args[0]), "views")
+	if !flo.File(dir + "/index.html").Exists() {
+		if err := flo.File(dir + "/index.html").StoreString(index); err != nil {
+			log.Fatal("Could not create default template: %s", err)
+		}
+	}
+	engine := html.New(dir, ".html")
 	app := fiber.New(fiber.Config{
 		Views: engine,
 	})
@@ -107,6 +122,6 @@ func startServer(cfg *Config, apiClient *URLScanClient) {
 		return c.JSON(job)
 	})
 
-	// Start Fiber on port 3000.
-	log.Fatal("server crashed: %s", app.Listen(":3000"))
+	// Start Fiber on local port.
+	log.Fatal("server crashed: %s", app.Listen(":"+fmt.Sprint(cfg.LocalPort)))
 }
